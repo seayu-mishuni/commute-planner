@@ -398,7 +398,8 @@ function renderList(){
     return;
   }
   emptyState.classList.add('hidden');
-  patterns.forEach(p => {
+  const sorted = [...patterns].sort((a, b) => (a.homeDepartureTime || '').localeCompare(b.homeDepartureTime || ''));
+  sorted.forEach(p => {
     const card = document.createElement('div');
     card.className = 'card';
     card.innerHTML = `
