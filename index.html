@@ -145,6 +145,11 @@
     font-weight:700;
     font-size:15px;
   }
+  .memo-note{
+    margin-top:6px;
+    font-size:14px;
+    color:var(--text-sub);
+  }
 
   /* モーダルフォーム */
   .overlay{
@@ -268,6 +273,10 @@
             <label>光善寺駅 発車時刻</label>
             <input type="time" id="fBoardTime" required>
           </div>
+        </div>
+        <div class="field">
+          <label>メモ（任意）</label>
+          <input type="text" id="fBoardMemo" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="例：先頭車両・準急に乗車">
         </div>
       </fieldset>
 
@@ -411,7 +420,7 @@ function openDetail(id){
 
   const steps = [
     { meta:'自宅出発', station:'自宅', time:p.homeDepartureTime, isEnd:false },
-    { meta:'乗車', station:STATIONS.board, time:p.boardTime, isEnd:false, doorSide:p.hirakatashi.doorSide, doorNote:`${STATIONS.hirakatashi}で下車`  },
+    { meta:'乗車', station:STATIONS.board, time:p.boardTime, isEnd:false, doorSide:p.hirakatashi.doorSide, doorNote:`${STATIONS.hirakatashi}で下車`, memo:p.boardMemo },
     { meta:`到着 ${fmtTime(p.hirakatashi.arriveTime)}・乗り換え`, station:STATIONS.hirakatashi, time:p.hirakatashi.departTime, isEnd:false },
     { meta:`${STATIONS.kawaramachiFrom} 到着 ${fmtTime(p.kawaramachi.arriveTime)}・下車、徒歩乗換`, station:STATIONS.kawaramachiTo, time:p.kawaramachi.departTime, isEnd:false },
     { meta:`到着 ${fmtTime(p.karasuma.arriveTime)}`, station:STATIONS.karasuma, time:null, isEnd:true },
@@ -430,6 +439,7 @@ function openDetail(id){
         <div class="station">${escapeHtml(s.station)}</div>
         ${s.time ? `<div class="time-big">${fmtTime(s.time)}</div>` : ''}
         ${s.doorSide ? `<div class="door-badge">${s.doorNote ? escapeHtml(s.doorNote) + '：' : ''}${doorLabel(s.doorSide)}のドアが開きます</div>` : ''}
+        ${s.memo ? `<div class="memo-note">${escapeHtml(s.memo)}</div>` : ''}
       </div>
     </div>
   `).join('');
@@ -469,6 +479,7 @@ function openForm(id){
     document.getElementById('fPatternLabel').value = p.name;
     document.getElementById('fHomeDeparture').value = p.homeDepartureTime;
     document.getElementById('fBoardTime').value = p.boardTime;
+    document.getElementById('fBoardMemo').value = p.boardMemo || '';
     document.getElementById('fHirakatashiArrive').value = p.hirakatashi.arriveTime;
     document.getElementById('fHirakatashiDepart').value = p.hirakatashi.departTime;
     document.getElementById('fKawaramachiArrive').value = p.kawaramachi.arriveTime;
@@ -480,6 +491,7 @@ function openForm(id){
   }else{
     document.getElementById('formTitle').textContent = 'パターンを追加';
     FORM_FIELD_IDS.forEach(fid => { document.getElementById(fid).value = ''; });
+    document.getElementById('fBoardMemo').value = '';
     setDoorSide('hirakatashi', 'left');
     deleteRow.classList.add('hidden');
   }
@@ -534,6 +546,7 @@ document.getElementById('saveBtn').addEventListener('click', () => {
     name: document.getElementById('fPatternLabel').value.trim(),
     homeDepartureTime: document.getElementById('fHomeDeparture').value,
     boardTime: document.getElementById('fBoardTime').value,
+    boardMemo: document.getElementById('fBoardMemo').value.trim(),
     hirakatashi: {
       arriveTime: document.getElementById('fHirakatashiArrive').value,
       departTime: document.getElementById('fHirakatashiDepart').value,
