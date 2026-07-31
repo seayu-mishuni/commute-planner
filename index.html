@@ -275,7 +275,11 @@
           </div>
         </div>
         <div class="field">
-          <label>メモ（任意）</label>
+          <label>自宅出発のメモ（任意）</label>
+          <input type="text" id="fHomeMemo" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="例：忘れ物確認・傘を持つ">
+        </div>
+        <div class="field">
+          <label>光善寺駅のメモ（任意）</label>
           <input type="text" id="fBoardMemo" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="例：先頭車両・準急に乗車">
         </div>
       </fieldset>
@@ -419,7 +423,7 @@ function openDetail(id){
   document.getElementById('detailTitle').textContent = p.name;
 
   const steps = [
-    { meta:'自宅出発', station:'自宅', time:p.homeDepartureTime, isEnd:false },
+    { meta:'自宅出発', station:'自宅', time:p.homeDepartureTime, isEnd:false, memo:p.homeMemo },
     { meta:'乗車', station:STATIONS.board, time:p.boardTime, isEnd:false, doorSide:p.hirakatashi.doorSide, doorNote:`${STATIONS.hirakatashi}で下車`, memo:p.boardMemo },
     { meta:`到着 ${fmtTime(p.hirakatashi.arriveTime)}・乗り換え`, station:STATIONS.hirakatashi, time:p.hirakatashi.departTime, isEnd:false },
     { meta:`${STATIONS.kawaramachiFrom} 到着 ${fmtTime(p.kawaramachi.arriveTime)}・下車、徒歩乗換`, station:STATIONS.kawaramachiTo, time:p.kawaramachi.departTime, isEnd:false },
@@ -478,6 +482,7 @@ function openForm(id){
     document.getElementById('formTitle').textContent = 'パターンを編集';
     document.getElementById('fPatternLabel').value = p.name;
     document.getElementById('fHomeDeparture').value = p.homeDepartureTime;
+    document.getElementById('fHomeMemo').value = p.homeMemo || '';
     document.getElementById('fBoardTime').value = p.boardTime;
     document.getElementById('fBoardMemo').value = p.boardMemo || '';
     document.getElementById('fHirakatashiArrive').value = p.hirakatashi.arriveTime;
@@ -491,6 +496,7 @@ function openForm(id){
   }else{
     document.getElementById('formTitle').textContent = 'パターンを追加';
     FORM_FIELD_IDS.forEach(fid => { document.getElementById(fid).value = ''; });
+    document.getElementById('fHomeMemo').value = '';
     document.getElementById('fBoardMemo').value = '';
     setDoorSide('hirakatashi', 'left');
     deleteRow.classList.add('hidden');
@@ -545,6 +551,7 @@ document.getElementById('saveBtn').addEventListener('click', () => {
     id: editingId || uid(),
     name: document.getElementById('fPatternLabel').value.trim(),
     homeDepartureTime: document.getElementById('fHomeDeparture').value,
+    homeMemo: document.getElementById('fHomeMemo').value.trim(),
     boardTime: document.getElementById('fBoardTime').value,
     boardMemo: document.getElementById('fBoardMemo').value.trim(),
     hirakatashi: {
