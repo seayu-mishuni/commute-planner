@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<title>通勤パターン</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#1A3A5C">
+<style>
+  :root{
+    --navy:#1A3A5C;
+    --navy-dark:#122942;
+    --navy-light:#2C567F;
+    --yellow:#FFC145;
+    --bg:#F2F5F8;
+    --card:#FFFFFF;
+    --text:#1A2530;
+    --text-sub:#5C6B7A;
+    --danger:#D9534F;
+    --line:#E3E8ED;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{
+    margin:0;
+    font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",sans-serif;
+    background:var(--bg);
+    color:var(--text);
+    padding-bottom:env(safe-area-inset-bottom);
+  }
+  header{
+    background:var(--navy);
+    color:#fff;
+    padding:calc(env(safe-area-inset-top) + 16px) 20px 16px;
+    font-size:20px;
+    font-weight:700;
+    letter-spacing:.02em;
+    position:sticky;
+    top:0;
+    z-index:5;
+  }
+  main{padding:16px;max-width:520px;margin:0 auto;}
+  .empty{
+    text-align:center;
+    color:var(--text-sub);
+    padding:60px 20px;
+    line-height:1.8;
+  }
+  .card{
+    background:var(--card);
+    border-radius:16px;
+    padding:16px 18px;
+    margin-bottom:12px;
+    box-shadow:0 1px 3px rgba(20,40,60,.08);
+    border-left:6px solid var(--navy);
+    cursor:pointer;
+  }
+  .card .name{
+    font-size:15px;
+    font-weight:700;
+    color:var(--navy);
+    margin-bottom:4px;
+  }
+  .card .board-line{
+    font-size:22px;
+    font-weight:700;
+  }
+  .card .board-line .time{font-size:26px;}
+  .card .sub{
+    font-size:13px;
+    color:var(--text-sub);
+    margin-top:4px;
+  }
+  .fab{
+    position:fixed;
+    right:20px;
+    bottom:calc(env(safe-area-inset-bottom) + 20px);
+    width:56px;height:56px;
+    border-radius:50%;
+    background:var(--yellow);
+    color:var(--navy-dark);
+    font-size:30px;
+    font-weight:700;
+    border:none;
+    box-shadow:0 4px 12px rgba(20,40,60,.3);
+    display:flex;align-items:center;justify-content:center;
+    z-index:10;
+  }
+  .fab:active{transform:scale(.95);}
+
+  /* 詳細画面 */
+  .detail-header{
+    display:flex;align-items:center;gap:10px;
+    margin-bottom:16px;
+  }
+  .back-btn{
+    background:none;border:none;color:#fff;font-size:22px;padding:4px 8px 4px 0;
+  }
+  .detail-title{font-size:18px;font-weight:700;flex:1;}
+  .icon-btn{background:none;border:none;color:#fff;font-size:18px;padding:4px 6px;}
+
+  .route{
+    background:var(--card);
+    border-radius:16px;
+    padding:20px;
+    box-shadow:0 1px 3px rgba(20,40,60,.08);
+  }
+  .step{
+    display:flex;
+    gap:14px;
+    position:relative;
+  }
+  .step .dot-col{
+    display:flex;flex-direction:column;align-items:center;
+    width:16px;
+  }
+  .dot{
+    width:14px;height:14px;border-radius:50%;
+    background:var(--navy);
+    flex-shrink:0;
+    margin-top:6px;
+  }
+  .dot.end{background:var(--yellow);}
+  .connector{
+    width:3px;flex:1;
+    background:var(--line);
+    margin:2px 0;
+  }
+  .step-body{padding-bottom:26px;flex:1;}
+  .step:last-child .step-body{padding-bottom:4px;}
+  .station{font-size:17px;font-weight:700;}
+  .time-big{font-size:32px;font-weight:700;color:var(--navy);margin:2px 0;}
+  .meta{font-size:14px;color:var(--text-sub);}
+  .door-badge{
+    display:inline-block;
+    margin-top:6px;
+    padding:6px 14px;
+    border-radius:20px;
+    background:var(--yellow);
+    color:var(--navy-dark);
+    font-weight:700;
+    font-size:15px;
+  }
+
+  /* モーダルフォーム */
+  .overlay{
+    position:fixed;inset:0;
+    background:rgba(10,20,30,.5);
+    display:flex;align-items:flex-end;
+    z-index:20;
+  }
+  .overlay.hidden{display:none;}
+  .sheet{
+    background:var(--bg);
+    width:100%;
+    max-height:92vh;
+    overflow-y:auto;
+    border-radius:20px 20px 0 0;
+    padding:20px 20px calc(env(safe-area-inset-bottom) + 20px);
+  }
+  .sheet h2{margin:0 0 16px;font-size:18px;color:var(--navy);}
+  .field{margin-bottom:14px;}
+  .field label{
+    display:block;font-size:13px;color:var(--text-sub);margin-bottom:4px;font-weight:600;
+  }
+  .field input{
+    width:100%;
+    padding:10px 12px;
+    border:1px solid var(--line);
+    border-radius:10px;
+    font-size:16px;
+    background:#fff;
+    color:var(--text);
+  }
+  .row2{display:flex;gap:10px;}
+  .row2 > *{flex:1;}
+  fieldset{
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:12px;
+    margin:0 0 16px;
+  }
+  legend{font-size:13px;font-weight:700;color:var(--navy);padding:0 6px;}
+  .door-toggle{display:flex;gap:8px;}
+  .door-toggle button{
+    flex:1;
+    padding:10px;
+    border-radius:10px;
+    border:1px solid var(--line);
+    background:#fff;
+    font-size:15px;
+    font-weight:700;
+    color:var(--text-sub);
+  }
+  .door-toggle button.selected{
+    background:var(--navy);
+    color:#fff;
+    border-color:var(--navy);
+  }
+  .sheet-actions{
+    display:flex;gap:10px;margin-top:8px;
+  }
+  .btn{
+    flex:1;
+    padding:14px;
+    border-radius:12px;
+    border:none;
+    font-size:16px;
+    font-weight:700;
+  }
+  .btn-primary{background:var(--navy);color:#fff;}
+  .btn-secondary{background:#fff;color:var(--text-sub);border:1px solid var(--line);}
+  .btn-danger{background:var(--danger);color:#fff;}
+
+  .hidden{display:none !important;}
+</style>
+</head>
+<body>
+
+<header id="listHeader">通勤パターン</header>
+
+<main id="listView">
+  <div id="cardList"></div>
+  <div id="emptyState" class="empty hidden">
+    パターンがまだありません。<br>
+    右下の「＋」から追加してください。
+  </div>
+</main>
+
+<button class="fab" id="fabAdd">＋</button>
+
+<!-- 詳細画面 -->
+<div id="detailView" class="hidden">
+  <header>
+    <div class="detail-header">
+      <button class="back-btn" id="backBtn">‹</button>
+      <div class="detail-title" id="detailTitle"></div>
+      <button class="icon-btn" id="editBtn">編集</button>
+    </div>
+  </header>
+  <main>
+    <div class="route" id="routeBody"></div>
+  </main>
+</div>
+
+<!-- 追加・編集フォーム -->
+<div id="formOverlay" class="overlay hidden">
+  <div class="sheet">
+    <h2 id="formTitle">パターンを追加</h2>
+    <form id="patternForm" autocomplete="off">
+      <div class="field">
+        <label>パターン名</label>
+        <input type="text" id="fPatternLabel" placeholder="例：平常時" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" required>
+      </div>
+
+      <fieldset>
+        <legend>乗車（光善寺駅）</legend>
+        <div class="row2">
+          <div class="field">
+            <label>自宅出発時刻</label>
+            <input type="time" id="fHomeDeparture" required>
+          </div>
+          <div class="field">
+            <label>光善寺駅 発車時刻</label>
+            <input type="time" id="fBoardTime" required>
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>乗り換え（枚方市駅）</legend>
+        <div class="row2">
+          <div class="field">
+            <label>到着時刻</label>
+            <input type="time" id="fHirakatashiArrive" required>
+          </div>
+          <div class="field">
+            <label>発車時刻</label>
+            <input type="time" id="fHirakatashiDepart" required>
+          </div>
+        </div>
+        <div class="field">
+          <label>降りるドアの位置</label>
+          <div class="door-toggle">
+            <button type="button" data-group="hirakatashi" data-side="left">左側</button>
+            <button type="button" data-group="hirakatashi" data-side="right">右側</button>
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>乗り換え（祇園四条駅 → 京都河原町駅）</legend>
+        <div class="row2">
+          <div class="field">
+            <label>祇園四条駅 到着時刻</label>
+            <input type="time" id="fKawaramachiArrive" required>
+          </div>
+          <div class="field">
+            <label>京都河原町駅 発車時刻</label>
+            <input type="time" id="fKawaramachiDepart" required>
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>到着（烏丸駅）</legend>
+        <div class="field">
+          <label>烏丸駅 到着時刻</label>
+          <input type="time" id="fKarasumaArrive" required>
+        </div>
+        <div class="field">
+          <label>会社到着時刻</label>
+          <input type="time" id="fOfficeArrival" required>
+        </div>
+      </fieldset>
+
+      <div class="sheet-actions">
+        <button type="button" class="btn btn-secondary" id="cancelBtn">キャンセル</button>
+        <button type="submit" class="btn btn-primary">保存</button>
+      </div>
+      <div class="sheet-actions" id="deleteRow" style="margin-top:10px;">
+        <button type="button" class="btn btn-danger" id="deleteBtn">このパターンを削除</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+const STORAGE_KEY = 'commute_patterns';
+
+const STATIONS = {
+  board: '光善寺駅',
+  hirakatashi: '枚方市駅',
+  kawaramachiFrom: '祇園四条駅',
+  kawaramachiTo: '京都河原町駅',
+  karasuma: '烏丸駅'
+};
+
+function loadPatterns(){
+  try{
+    return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+  }catch(e){
+    return [];
+  }
+}
+function savePatterns(list){
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+}
+function uid(){
+  return Date.now().toString(36) + Math.random().toString(36).slice(2,8);
+}
+
+let patterns = loadPatterns();
+let editingId = null; // フォームが編集中のパターンID（nullなら新規）
+let doorSides = { hirakatashi: 'left' };
+
+const listView = document.getElementById('listView');
+const detailView = document.getElementById('detailView');
+const cardList = document.getElementById('cardList');
+const emptyState = document.getElementById('emptyState');
+const formOverlay = document.getElementById('formOverlay');
+
+function fmtTime(t){
+  return t || '--:--';
+}
+function doorLabel(side){
+  return side === 'right' ? '右側' : '左側';
+}
+
+function renderList(){
+  cardList.innerHTML = '';
+  if(patterns.length === 0){
+    emptyState.classList.remove('hidden');
+    return;
+  }
+  emptyState.classList.add('hidden');
+  patterns.forEach(p => {
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.innerHTML = `
+      <div class="name">${escapeHtml(p.name)}</div>
+      <div class="board-line">自宅 <span class="time">${fmtTime(p.homeDepartureTime)}</span> 出発</div>
+      <div class="sub">${STATIONS.board} ${fmtTime(p.boardTime)}発・会社到着 ${fmtTime(p.officeArrivalTime)}</div>
+    `;
+    card.addEventListener('click', () => openDetail(p.id));
+    cardList.appendChild(card);
+  });
+}
+
+function escapeHtml(s){
+  return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function openDetail(id){
+  const p = patterns.find(x => x.id === id);
+  if(!p) return;
+  editingId = id;
+  document.getElementById('detailTitle').textContent = p.name;
+
+  const steps = [
+    { meta:'自宅出発', station:'自宅', time:p.homeDepartureTime, isEnd:false },
+    { meta:'乗車', station:STATIONS.board, time:p.boardTime, isEnd:false, doorSide:p.hirakatashi.doorSide, doorNote:`${STATIONS.hirakatashi}で下車`  },
+    { meta:`到着 ${fmtTime(p.hirakatashi.arriveTime)}・乗り換え`, station:STATIONS.hirakatashi, time:p.hirakatashi.departTime, isEnd:false },
+    { meta:`${STATIONS.kawaramachiFrom} 到着 ${fmtTime(p.kawaramachi.arriveTime)}・下車、徒歩乗換`, station:STATIONS.kawaramachiTo, time:p.kawaramachi.departTime, isEnd:false },
+    { meta:`到着 ${fmtTime(p.karasuma.arriveTime)}`, station:STATIONS.karasuma, time:null, isEnd:true },
+    { meta:'会社到着', station:'会社', time:p.officeArrivalTime, isEnd:false }
+  ];
+
+  const body = document.getElementById('routeBody');
+  body.innerHTML = steps.map((s, i) => `
+    <div class="step">
+      <div class="dot-col">
+        <div class="dot ${s.isEnd ? 'end' : ''}"></div>
+        ${i < steps.length - 1 ? '<div class="connector"></div>' : ''}
+      </div>
+      <div class="step-body">
+        <div class="meta">${s.meta}</div>
+        <div class="station">${escapeHtml(s.station)}</div>
+        ${s.time ? `<div class="time-big">${fmtTime(s.time)}</div>` : ''}
+        ${s.doorSide ? `<div class="door-badge">${s.doorNote ? escapeHtml(s.doorNote) + '：' : ''}${doorLabel(s.doorSide)}のドアが開きます</div>` : ''}
+      </div>
+    </div>
+  `).join('');
+
+  listView.classList.add('hidden');
+  document.getElementById('listHeader').classList.add('hidden');
+  document.querySelector('.fab').classList.add('hidden');
+  detailView.classList.remove('hidden');
+}
+
+function closeDetail(){
+  detailView.classList.add('hidden');
+  listView.classList.remove('hidden');
+  document.getElementById('listHeader').classList.remove('hidden');
+  document.querySelector('.fab').classList.remove('hidden');
+  editingId = null;
+}
+
+function setDoorSide(group, side){
+  doorSides[group] = side;
+  document.querySelectorAll(`.door-toggle button[data-group="${group}"]`).forEach(btn => {
+    btn.classList.toggle('selected', btn.dataset.side === side);
+  });
+}
+
+document.querySelectorAll('.door-toggle button').forEach(btn => {
+  btn.addEventListener('click', () => setDoorSide(btn.dataset.group, btn.dataset.side));
+});
+
+function openForm(id){
+  editingId = id || null;
+  const deleteRow = document.getElementById('deleteRow');
+
+  if(id){
+    const p = patterns.find(x => x.id === id);
+    document.getElementById('formTitle').textContent = 'パターンを編集';
+    document.getElementById('fPatternLabel').value = p.name;
+    document.getElementById('fHomeDeparture').value = p.homeDepartureTime;
+    document.getElementById('fBoardTime').value = p.boardTime;
+    document.getElementById('fHirakatashiArrive').value = p.hirakatashi.arriveTime;
+    document.getElementById('fHirakatashiDepart').value = p.hirakatashi.departTime;
+    document.getElementById('fKawaramachiArrive').value = p.kawaramachi.arriveTime;
+    document.getElementById('fKawaramachiDepart').value = p.kawaramachi.departTime;
+    document.getElementById('fKarasumaArrive').value = p.karasuma.arriveTime;
+    document.getElementById('fOfficeArrival').value = p.officeArrivalTime;
+    setDoorSide('hirakatashi', p.hirakatashi.doorSide);
+    deleteRow.classList.remove('hidden');
+  }else{
+    document.getElementById('formTitle').textContent = 'パターンを追加';
+    document.getElementById('patternForm').reset();
+    setDoorSide('hirakatashi', 'left');
+    deleteRow.classList.add('hidden');
+  }
+  formOverlay.classList.remove('hidden');
+}
+
+function closeForm(){
+  formOverlay.classList.add('hidden');
+}
+
+document.getElementById('fabAdd').addEventListener('click', () => openForm(null));
+document.getElementById('backBtn').addEventListener('click', closeDetail);
+document.getElementById('editBtn').addEventListener('click', () => openForm(editingId));
+document.getElementById('cancelBtn').addEventListener('click', closeForm);
+
+document.getElementById('deleteBtn').addEventListener('click', () => {
+  if(!editingId) return;
+  if(!confirm('このパターンを削除しますか？')) return;
+  patterns = patterns.filter(p => p.id !== editingId);
+  savePatterns(patterns);
+  renderList();
+  closeForm();
+  closeDetail();
+});
+
+document.getElementById('patternForm').addEventListener('submit', e => {
+  e.preventDefault();
+
+  const data = {
+    id: editingId || uid(),
+    name: document.getElementById('fPatternLabel').value.trim(),
+    homeDepartureTime: document.getElementById('fHomeDeparture').value,
+    boardTime: document.getElementById('fBoardTime').value,
+    hirakatashi: {
+      arriveTime: document.getElementById('fHirakatashiArrive').value,
+      departTime: document.getElementById('fHirakatashiDepart').value,
+      doorSide: doorSides.hirakatashi
+    },
+    kawaramachi: {
+      arriveTime: document.getElementById('fKawaramachiArrive').value,
+      departTime: document.getElementById('fKawaramachiDepart').value
+    },
+    karasuma: {
+      arriveTime: document.getElementById('fKarasumaArrive').value
+    },
+    officeArrivalTime: document.getElementById('fOfficeArrival').value
+  };
+
+  if(editingId){
+    const idx = patterns.findIndex(p => p.id === editingId);
+    patterns[idx] = data;
+  }else{
+    patterns.push(data);
+  }
+  savePatterns(patterns);
+  renderList();
+  closeForm();
+  if(detailView.classList.contains('hidden') === false){
+    openDetail(data.id);
+  }
+});
+
+renderList();
+
+if('serviceWorker' in navigator){
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch(() => {});
+  });
+}
+</script>
+</body>
+</html>
