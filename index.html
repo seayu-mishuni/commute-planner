@@ -71,7 +71,7 @@
   .card .board-line + .board-line{margin-top:2px;}
   .card .board-line .time{font-size:26px;}
   .card .sub{
-    font-size:13px;
+    font-size:16px;
     color:var(--text-sub);
     margin-top:4px;
   }
@@ -276,7 +276,7 @@
         </div>
         <div class="field">
           <label>自宅出発のメモ（任意）</label>
-          <input type="text" id="fHomeMemo" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="例：忘れ物確認・傘を持つ">
+          <input type="text" id="fDepartureMemo" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="例：忘れ物確認・傘を持つ">
         </div>
         <div class="field">
           <label>光善寺駅のメモ（任意）</label>
@@ -482,7 +482,7 @@ function openForm(id){
     document.getElementById('formTitle').textContent = 'パターンを編集';
     document.getElementById('fPatternLabel').value = p.name;
     document.getElementById('fHomeDeparture').value = p.homeDepartureTime;
-    document.getElementById('fHomeMemo').value = p.homeMemo || '';
+    document.getElementById('fDepartureMemo').value = p.homeMemo || '';
     document.getElementById('fBoardTime').value = p.boardTime;
     document.getElementById('fBoardMemo').value = p.boardMemo || '';
     document.getElementById('fHirakatashiArrive').value = p.hirakatashi.arriveTime;
@@ -496,7 +496,7 @@ function openForm(id){
   }else{
     document.getElementById('formTitle').textContent = 'パターンを追加';
     FORM_FIELD_IDS.forEach(fid => { document.getElementById(fid).value = ''; });
-    document.getElementById('fHomeMemo').value = '';
+    document.getElementById('fDepartureMemo').value = '';
     document.getElementById('fBoardMemo').value = '';
     setDoorSide('hirakatashi', 'left');
     deleteRow.classList.add('hidden');
@@ -551,7 +551,7 @@ document.getElementById('saveBtn').addEventListener('click', () => {
     id: editingId || uid(),
     name: document.getElementById('fPatternLabel').value.trim(),
     homeDepartureTime: document.getElementById('fHomeDeparture').value,
-    homeMemo: document.getElementById('fHomeMemo').value.trim(),
+    homeMemo: document.getElementById('fDepartureMemo').value.trim(),
     boardTime: document.getElementById('fBoardTime').value,
     boardMemo: document.getElementById('fBoardMemo').value.trim(),
     hirakatashi: {
