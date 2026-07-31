@@ -68,6 +68,7 @@
     font-size:22px;
     font-weight:700;
   }
+  .card .board-line + .board-line{margin-top:2px;}
   .card .board-line .time{font-size:26px;}
   .card .sub{
     font-size:13px;
@@ -250,10 +251,10 @@
 <div id="formOverlay" class="overlay hidden">
   <div class="sheet">
     <h2 id="formTitle">パターンを追加</h2>
-    <form id="patternForm" autocomplete="off">
+    <div id="patternForm">
       <div class="field">
         <label>タイトル</label>
-        <input type="text" id="fPatternLabel" name="pattern-label" placeholder="例：平常時" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" required>
+        <input type="text" id="fPatternLabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" required>
       </div>
 
       <fieldset>
@@ -319,12 +320,12 @@
 
       <div class="sheet-actions">
         <button type="button" class="btn btn-secondary" id="cancelBtn">キャンセル</button>
-        <button type="submit" class="btn btn-primary">保存</button>
+        <button type="button" class="btn btn-primary" id="saveBtn">保存</button>
       </div>
       <div class="sheet-actions" id="deleteRow" style="margin-top:10px;">
         <button type="button" class="btn btn-danger" id="deleteBtn">このパターンを削除</button>
       </div>
-    </form>
+    </div>
   </div>
 </div>
 
@@ -357,6 +358,13 @@ let patterns = loadPatterns();
 let editingId = null; // フォームが編集中のパターンID（nullなら新規）
 let doorSides = { hirakatashi: 'left' };
 
+const FORM_FIELD_IDS = [
+  'fPatternLabel', 'fHomeDeparture', 'fBoardTime',
+  'fHirakatashiArrive', 'fHirakatashiDepart',
+  'fKawaramachiArrive', 'fKawaramachiDepart',
+  'fKarasumaArrive', 'fOfficeArrival'
+];
+
 const listView = document.getElementById('listView');
 const detailView = document.getElementById('detailView');
 const cardList = document.getElementById('cardList');
@@ -383,7 +391,8 @@ function renderList(){
     card.innerHTML = `
       <div class="name">${escapeHtml(p.name)}</div>
       <div class="board-line">自宅 <span class="time">${fmtTime(p.homeDepartureTime)}</span> 出発</div>
-      <div class="sub">${STATIONS.board} ${fmtTime(p.boardTime)}発・会社到着 ${fmtTime(p.officeArrivalTime)}</div>
+      <div class="board-line">${STATIONS.board} <span class="time">${fmtTime(p.boardTime)}</span> 発車</div>
+      <div class="sub">会社到着 ${fmtTime(p.officeArrivalTime)}</div>
     `;
     card.addEventListener('click', () => openDetail(p.id));
     cardList.appendChild(card);
@@ -470,7 +479,7 @@ function openForm(id){
     deleteRow.classList.remove('hidden');
   }else{
     document.getElementById('formTitle').textContent = 'パターンを追加';
-    document.getElementById('patternForm').reset();
+    FORM_FIELD_IDS.forEach(fid => { document.getElementById(fid).value = ''; });
     setDoorSide('hirakatashi', 'left');
     deleteRow.classList.add('hidden');
   }
@@ -480,6 +489,23 @@ function openForm(id){
 function closeForm(){
   formOverlay.classList.add('hidden');
 }
+
+/* スワイプで詳細画面から一覧へ戻る */
+(function(){
+  let sx = 0, sy = 0, tracking = false;
+  detailView.addEventListener('touchstart', e => {
+    if(e.touches.length !== 1 || e.target.closest('button')){ tracking = false; return; }
+    sx = e.touches[0].clientX; sy = e.touches[0].clientY; tracking = true;
+  }, { passive: true });
+  detailView.addEventListener('touchend', e => {
+    if(!tracking) return;
+    tracking = false;
+    const t = e.changedTouches[0];
+    const dx = t.clientX - sx, dy = t.clientY - sy;
+    if(dx < 80 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+    closeDetail();
+  }, { passive: true });
+})();
 
 document.getElementById('fabAdd').addEventListener('click', () => openForm(null));
 document.getElementById('backBtn').addEventListener('click', closeDetail);
@@ -496,8 +522,12 @@ document.getElementById('deleteBtn').addEventListener('click', () => {
   closeDetail();
 });
 
-document.getElementById('patternForm').addEventListener('submit', e => {
-  e.preventDefault();
+document.getElementById('saveBtn').addEventListener('click', () => {
+  const hasEmpty = FORM_FIELD_IDS.some(fid => !document.getElementById(fid).value.trim());
+  if(hasEmpty){
+    alert('すべての項目を入力してください。');
+    return;
+  }
 
   const data = {
     id: editingId || uid(),
