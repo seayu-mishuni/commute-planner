@@ -8,7 +8,8 @@
 <link rel="apple-touch-icon" href="icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="theme-color" content="#1A3A5C">
+<meta name="theme-color" content="#1A3A5C" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0D1B2A" media="(prefers-color-scheme: dark)">
 <style>
   :root{
     --navy:#1A3A5C;
@@ -21,6 +22,21 @@
     --text-sub:#5C6B7A;
     --danger:#D9534F;
     --line:#E3E8ED;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --navy:#3E6E9E;
+      --navy-dark:#0D1B2A;
+      --navy-light:#4C7FB0;
+      --yellow:#FFC145;
+      --bg:#0D1B2A;
+      --card:#16283C;
+      --text:#E8EDF2;
+      --text-sub:#9AACBC;
+      --danger:#E57873;
+      --line:#28405A;
+      --icon-filter:invert(1);
+    }
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
   html,body{height:100%;}
@@ -178,8 +194,11 @@
     border:1px solid var(--line);
     border-radius:10px;
     font-size:18px;
-    background:#fff;
+    background:var(--card);
     color:var(--text);
+  }
+  .field input::-webkit-calendar-picker-indicator{
+    filter:var(--icon-filter, none);
   }
   .row2{display:flex;gap:10px;}
   .row2 > *{flex:1;}
@@ -196,7 +215,7 @@
     padding:10px;
     border-radius:10px;
     border:1px solid var(--line);
-    background:#fff;
+    background:var(--card);
     font-size:17px;
     font-weight:700;
     color:var(--text-sub);
@@ -218,7 +237,7 @@
     font-weight:700;
   }
   .btn-primary{background:var(--navy);color:#fff;}
-  .btn-secondary{background:#fff;color:var(--text-sub);border:1px solid var(--line);}
+  .btn-secondary{background:var(--card);color:var(--text-sub);border:1px solid var(--line);}
   .btn-danger{background:var(--danger);color:#fff;}
 
   .hidden{display:none !important;}
